@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1f77b4">
+    <meta name="description" content="Portfolio VAR Dashboard - Real-time risk analysis">
+    
+    <title>Portfolio VAR Dashboard</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='50' text-anchor='middle' x='50' fill='%231f77b4'>📊</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><text y='90' font-size='90' text-anchor='middle' x='90' fill='%231f77b4'>📊</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        header .timestamp {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric-card.warning {
+            border-left-color: #f39c12;
+        }
+        
+        .metric-card.danger {
+            border-left-color: #e74c3c;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .metric-unit {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #f5f5f5;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #ffe6e6;
+            color: #c00;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c00;
+        }
+        
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .controls button:hover {
+            background: #5568d3;
+        }
+        
+        .install-prompt {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .install-prompt.show {
+            display: block;
+        }
+        
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .position-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            border-left: 3px solid #ddd;
+        }
+        
+        .position-item.long {
+            border-left-color: #27ae60;
+        }
+        
+        .position-item.short {
+            border-left-color: #e74c3c;
+        }
+        
+        .position-contract {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .position-count {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .position-count.long {
+            color: #27ae60;
+        }
+        
+        .position-count.short {
+            color: #e74c3c;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-value {
+                font-size: 20px;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Portfolio VAR Dashboard</h1>
+            <p class="subtitle">CME 30-Day Fed Funds Futures - Real-Time Risk Analysis</p>
+            <div class="timestamp">Last updated: <span id="timestamp">--:--:--</span></div>
+        </header>
+        
+        <div class="install-prompt" id="installPrompt">
+            <strong>Install App:</strong> Add this dashboard to your home screen for quick access!
+            <button onclick="installApp()" style="margin-left: auto;">Install</button>
+        </div>
+        
+        <div class="controls">
+            <button onclick="refreshData()">🔄 Refresh Now</button>
+            <label>
+                <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()"> Auto-refresh every 30s
+            </label>
+            <span id="connectionStatus" style="margin-left: auto; font-size: 12px; color: #999;"></span>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="metrics" id="metricsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading portfolio data...</p>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('summary')">Summary</button>
+            <button class="tab-btn" onclick="switchTab('positions')">Positions</button>
+            <button class="tab-btn" onclick="switchTab('info')">Info</button>
+        </div>
+        
+        <div id="summary" class="tab-content active">
+            <h2>Risk Summary</h2>
+            <p id="summaryText"></p>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+                <tbody id="summaryTable"></tbody>
+            </table>
+        </div>
+        
+        <div id="positions" class="tab-content">
+            <h2>Position Details (Traded Only)</h2>
+            <div id="positionGrid" class="position-grid"></div>
+            <table style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Contract</th>
+                        <th>Series</th>
+                        <th>Position</th>
+                        <th>DV01 Sensitivity</th>
+                    </tr>
+                </thead>
+                <tbody id="positionsTable"></tbody>
+            </table>
+        </div>
+        
+        <div id="info" class="tab-content">
+            <h2>Information</h2>
+            <h3>Calculation Method</h3>
+            <p>Parametric VAR using matrix-based portfolio variance:</p>
+            <pre>Portfolio Variance = d' × Σ × d
+Portfolio Volatility = √Variance
+VaR@95% = mean - 1.645 × σ_p
+VaR@99% = mean - 2.326 × σ_p</pre>
+            
+            <h3>Data Sources</h3>
+            <ul>
+                <li>Live Positions: MySQL (Real-time)</li>
+                <li>Reference Metrics: Excel (Historical 2020-2026)</li>
+                <li>Correlation Matrix: 35×35 (Full curve)</li>
+            </ul>
+            
+            <h3>Parameters</h3>
+            <ul>
+                <li>Contract Multiplier: $4,167/bp</li>
+                <li>Confidence Levels: 95%, 99%</li>
+                <li>Total Contracts: 35 (C1-C35)</li>
+                <li>Data Period: 2,401 trading days</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Portfolio VAR Dashboard | Live Data | PWA Enabled</p>
+            <p>Backend API: <span id="apiUrl">Loading...</span></p>
+        </footer>
+    </div>
+    
+    <script>
+        // Configuration
+        const API_URL = window.location.origin + '/api';
+        let autoRefreshInterval = null;
+        let deferredPrompt = null;
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('Service Worker registration failed:', err);
+            });
+        }
+        
+        // Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('App installed');
+                        document.getElementById('installPrompt').classList.remove('show');
+                    }
+                });
+                deferredPrompt = null;
+            }
+        }
+        
+        // Data Loading
+        async function fetchPortfolioData() {
+            try {
+                document.getElementById('connectionStatus').innerHTML = '⚪ Connecting...';
+                const response = await fetch(`${API_URL}/var/summary`);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                document.getElementById('connectionStatus').innerHTML = '🟢 Connected';
+                renderData(data);
+                return true;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('connectionStatus').innerHTML = '🔴 Disconnected';
+                showError(`Cannot connect to API: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function fetchDetailedData() {
+            try {
+                const response = await fetch(`${API_URL}/var`);
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching detailed data:', error);
+                return null;
+            }
+        }
+        
+        function renderData(data) {
+            const timestamp = new Date(data.timestamp).toLocaleTimeString();
+            document.getElementById('timestamp').textContent = timestamp;
+            document.getElementById('apiUrl').textContent = API_URL;
+            
+            const volatility = data.volatility;
+            const var95 = data.var_95;
+            const var99 = data.var_99;
+            const totalPos = data.total_positions;
+            const totalDv01 = data.total_dv01;
+            
+            // Format currency
+            const fmt = (n) => new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(n);
+            
+            // Render metrics
+            document.getElementById('metricsContainer').innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Portfolio Volatility</div>
+                    <div class="metric-value">${fmt(volatility)}</div>
+                    <div class="metric-unit">per day</div>
+                </div>
+                <div class="metric-card warning">
+                    <div class="metric-label">VaR @ 95% Confidence</div>
+                    <div class="metric-value">${fmt(var95)}</div>
+                    <div class="metric-unit">daily loss limit</div>
+                </div>
+                <div class="metric-card danger">
+                    <div class="metric-label">VaR @ 99% Confidence</div>
+                    <div class="metric-value">${fmt(var99)}</div>
+                    <div class="metric-unit">extreme loss limit</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Net Positions</div>
+                    <div class="metric-value">${totalPos.toLocaleString()}</div>
+                    <div class="metric-unit">contracts</div>
+                </div>
+            `;
+            
+            // Render summary
+            const summaryText = `
+                <strong>Daily Portfolio Risk at 95% Confidence:</strong> On 95 out of 100 trading days, losses will not exceed <strong>${fmt(Math.abs(var95))}</strong>.<br><br>
+                <strong>Daily Portfolio Risk at 99% Confidence:</strong> On 99 out of 100 trading days, losses will not exceed <strong>${fmt(Math.abs(var99))}</strong>.<br><br>
+                <strong>Portfolio Volatility:</strong> Daily price movements are expected to cause profit/loss swings of ±<strong>${fmt(volatility)}</strong>.
+            `;
+            document.getElementById('summaryText').innerHTML = summaryText;
+            
+            document.getElementById('summaryTable').innerHTML = `
+                <tr><td>Portfolio Volatility</td><td>${fmt(volatility)}/day</td></tr>
+                <tr><td>VaR @ 95%</td><td>${fmt(var95)}</td></tr>
+                <tr><td>VaR @ 99%</td><td>${fmt(var99)}</td></tr>
+                <tr><td>Total Net Position</td><td>${totalPos.toLocaleString()} contracts</td></tr>
+                <tr><td>Total DV01</td><td>${fmt(totalDv01)}/bp</td></tr>
+            `;
+            
+            // Fetch and render detailed positions
+            fetchDetailedData().then(detailedData => {
+                if (detailedData && detailedData.positions) {
+                    renderPositions(detailedData.positions);
+                }
+            });
+        }
+        
+        function renderPositions(positions) {
+            const traded = positions.filter(p => p.position !== 0);
+            const fmt = (n) => new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0
+            }).format(n);
+            
+            // Position grid
+            let gridHTML = '';
+            for (const pos of traded) {
+                const isLong = pos.position > 0;
+                gridHTML += `
+                    <div class="position-item ${isLong ? 'long' : 'short'}">
+                        <div class="position-contract">${pos.c_slot}</div>
+                        <div class="position-contract">${pos.series}</div>
+                        <div class="position-count ${isLong ? 'long' : 'short'}">${pos.position.toLocaleString()}</div>
+                        <div style="font-size: 12px; color: #666;">${fmt(pos.dv01)}/bp</div>
+                    </div>
+                `;
+            }
+            document.getElementById('positionGrid').innerHTML = gridHTML;
+            
+            // Positions table
+            let tableHTML = '';
+            for (const pos of traded) {
+                tableHTML += `
+                    <tr>
+                        <td><strong>${pos.c_slot}</strong></td>
+                        <td>${pos.series}</td>
+                        <td style="color: ${pos.position > 0 ? '#27ae60' : '#e74c3c'}">${pos.position.toLocaleString()}</td>
+                        <td>${fmt(pos.dv01)}</td>
+                    </tr>
+                `;
+            }
+            document.getElementById('positionsTable').innerHTML = tableHTML;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorContainer');
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        function refreshData() {
+            fetchPortfolioData();
+        }
+        
+        function toggleAutoRefresh() {
+            if (document.getElementById('autoRefresh').checked) {
+                autoRefreshInterval = setInterval(refreshData, 30000);
+                console.log('Auto-refresh enabled (30s)');
+            } else {
+                clearInterval(autoRefreshInterval);
+                console.log('Auto-refresh disabled');
+            }
+        }
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Initial load
+        window.addEventListener('load', () => {
+            fetchPortfolioData();
+        });
+    </script>
+</body>
+</html>

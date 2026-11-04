@@ -1,0 +1,17 @@
+run = "python app.py"
+language = "python3"
+
+[nix]
+channel = "stable-22_11"
+packages = ["python310Full"]
+
+[env]
+FLASK_ENV = "production"
+PYTHONUNBUFFERED = "1"
+PORT = "3000"
+
+[gitignore]
+__pycache__ = true
+*.pyc = true
+.env = true
+*.log = true
