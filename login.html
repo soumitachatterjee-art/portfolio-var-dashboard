@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>Portfolio VAR Dashboard - Login</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .login-header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error {
+            background: #ffe6e6;
+            color: #c00;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c00;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .success {
+            background: #e6ffe6;
+            color: #008000;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #008000;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .info-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .info-box strong {
+            color: #333;
+        }
+        
+        .spinner {
+            display: none;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        button:disabled .spinner {
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .button-text {
+            display: inline-block;
+        }
+        
+        button:disabled .button-text {
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+            
+            .login-icon {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">📊</div>
+            <h1>Portfolio VAR</h1>
+            <p>CME 30-Day Fed Funds Futures</p>
+        </div>
+        
+        <div class="error" id="errorMsg"></div>
+        <div class="success" id="successMsg"></div>
+        
+        <div class="info-box">
+            <strong>Access:</strong> Enter your <strong>@axxela.in</strong> email to access the dashboard. No password required.
+        </div>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email"
+                    placeholder="your.name@axxela.in"
+                    required
+                    autofocus
+                >
+                <div class="hint">Must be a @axxela.in email address</div>
+            </div>
+            
+            <button type="submit" id="loginBtn">
+                <span class="spinner"></span>
+                <span class="button-text">Sign In</span>
+            </button>
+        </form>
+    </div>
+    
+    <script>
+        // Check if already logged in
+        fetch('/api/user')
+            .then(r => {
+                if (r.ok) {
+                    window.location.href = '/';
+                }
+            });
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            
+            // Validate email format
+            if (!email.includes('@axxela.in')) {
+                errorMsg.textContent = 'Please use your @axxela.in email address.';
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+                return;
+            }
+            
+            // Disable button
+            btn.disabled = true;
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            
+            // Send login request
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(r => {
+                if (r.ok) {
+                    successMsg.textContent = 'Login successful! Redirecting...';
+                    successMsg.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                    return;
+                }
+                return r.json().then(data => {
+                    throw new Error(data.error || 'Login failed');
+                });
+            })
+            .catch(err => {
+                btn.disabled = false;
+                errorMsg.textContent = err.message || 'Login failed. Please try again.';
+                errorMsg.style.display = 'block';
+            });
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('email').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

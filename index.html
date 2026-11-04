@@ -296,7 +296,13 @@
         <header>
             <h1>📊 Portfolio VAR Dashboard</h1>
             <p class="subtitle">CME 30-Day Fed Funds Futures - Real-Time Risk Analysis</p>
-            <div class="timestamp">Last updated: <span id="timestamp">--:--:--</span></div>
+            <div class="timestamp">
+                Last updated: <span id="timestamp">--:--:--</span>
+                <span id="userInfo" style="margin-left: auto; font-size: 12px; color: #666;">
+                    Logged in as: <strong id="userEmail">--</strong>
+                    <a href="javascript:logout()" style="margin-left: 10px; color: #667eea; text-decoration: none;">Logout</a>
+                </span>
+            </div>
         </header>
         
         <div class="install-prompt" id="installPrompt">
@@ -391,6 +397,33 @@ VaR@99% = mean - 2.326 × σ_p</pre>
         const API_URL = window.location.origin + '/api';
         let autoRefreshInterval = null;
         let deferredPrompt = null;
+        
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const r = await fetch('/api/user');
+                if (!r.ok) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                const data = await r.json();
+                if (data.authenticated) {
+                    document.getElementById('userEmail').textContent = data.email;
+                    return true;
+                }
+                window.location.href = '/login';
+                return false;
+            } catch (e) {
+                window.location.href = '/login';
+                return false;
+            }
+        }
+        
+        function logout() {
+            fetch('/logout').then(() => {
+                window.location.href = '/login';
+            });
+        }
         
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
@@ -593,8 +626,11 @@ VaR@99% = mean - 2.326 × σ_p</pre>
         }
         
         // Initial load
-        window.addEventListener('load', () => {
-            fetchPortfolioData();
+        window.addEventListener('load', async () => {
+            const authenticated = await checkAuth();
+            if (authenticated) {
+                fetchPortfolioData();
+            }
         });
     </script>
 </body>

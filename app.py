@@ -1,22 +1,24 @@
 """
-Portfolio VAR Dashboard - Combined Flask App
+Portfolio VAR Dashboard - Combined Flask App with Email Authentication
 Serves both API and PWA frontend
-Ready to deploy to Replit, Heroku, or any cloud platform
+Ready to deploy to Heroku
 """
 
-from flask import Flask, jsonify, request, render_string_template
+from flask import Flask, jsonify, request, render_string_template, session, redirect, url_for
 import pandas as pd
 import numpy as np
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import logging
+import secrets
 
 app = Flask(__name__, static_folder='.', static_url_path='')
+app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
 # Enable CORS
 from flask_cors import CORS
-CORS(app)
+CORS(app, supports_credentials=True)
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +29,10 @@ DB_HOST_STELLARRISK = os.getenv('DB_HOST_STELLARRISK', '192.168.102.245')
 DB_USER_STELLARRISK = os.getenv('DB_USER_STELLARRISK', 'risk_reader')
 DB_PASS_STELLARRISK = os.getenv('DB_PASS_STELLARRISK', 'risk_reader@123')
 DB_NAME_STELLARRISK = os.getenv('DB_NAME_STELLARRISK', 'stellarrisk')
+
+# Authentication
+ALLOWED_EMAIL_DOMAIN = os.getenv('ALLOWED_EMAIL_DOMAIN', '@axxela.in')
+SESSION_TIMEOUT = 86400  # 24 hours
 
 EXCEL_FILE = os.path.join(os.path.dirname(__file__), 'FUT-01-41-VAR-CORREL.xlsx')
 PRODUCT_NAME = 'CME 30DayFedFunds'
@@ -42,6 +48,23 @@ MONTH_MAP = {
 
 # Cache for Excel metrics
 _excel_cache = {'correl': None, 'std_devs': None, 'loaded_at': None}
+
+# Authentication helpers
+def is_valid_email(email):
+    """Check if email is valid and from allowed domain"""
+    if not email or '@' not in email:
+        return False
+    return email.lower().endswith(ALLOWED_EMAIL_DOMAIN.lower())
+
+def login_required(f):
+    """Decorator to check if user is logged in"""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_email' not in session:
+            return jsonify({'error': 'Unauthorized', 'redirect': '/login'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 def get_excel_metrics():
     """Load correlation and volatility metrics from Excel (cached)"""
@@ -203,10 +226,56 @@ def calculate_portfolio_var(dv01_vector, cov_matrix):
 
 # Routes
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Email-only login (no password)"""
+    if request.method == 'GET':
+        # Check if already logged in
+        if 'user_email' in session:
+            return redirect(url_for('index'))
+        # Serve login page
+        with open('login.html', 'r') as f:
+            return f.read()
+    
+    # POST: Handle login
+    data = request.get_json() or request.form
+    email = data.get('email', '').strip().lower()
+    
+    if not is_valid_email(email):
+        return jsonify({'error': 'Invalid email. Must be @axxela.in domain.'}), 400
+    
+    # Set session
+    session['user_email'] = email
+    session['login_time'] = datetime.now().isoformat()
+    
+    return jsonify({'status': 'ok', 'redirect': '/'})
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    """Logout and clear session"""
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/api/user', methods=['GET'])
+def get_user():
+    """Get current logged-in user"""
+    if 'user_email' not in session:
+        return jsonify({'authenticated': False}), 401
+    return jsonify({'authenticated': True, 'email': session.get('user_email')})
+
 @app.route('/')
+@login_required
 def index():
-    """Serve the PWA frontend"""
+    """Serve the PWA frontend (requires login)"""
     return app.send_file('index.html')
+
+@app.route('/login.html')
+def login_page():
+    """Serve login page"""
+    if 'user_email' in session:
+        return redirect(url_for('index'))
+    with open('login.html', 'r') as f:
+        return f.read()
 
 @app.route('/manifest.json')
 def manifest():
@@ -224,6 +293,7 @@ def health():
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()})
 
 @app.route('/api/var', methods=['GET'])
+@login_required
 def get_portfolio_var():
     """Calculate and return portfolio VAR"""
     try:
@@ -268,6 +338,7 @@ def get_portfolio_var():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/var/summary', methods=['GET'])
+@login_required
 def get_var_summary():
     """Get only summary metrics (lightweight)"""
     try:
