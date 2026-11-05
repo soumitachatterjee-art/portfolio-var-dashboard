@@ -267,7 +267,7 @@ def get_user():
 @login_required
 def index():
     """Serve the PWA frontend (requires login)"""
-    return app.send_file('index.html')
+    return send_file('index.html')
 
 @app.route('/login.html')
 def login_page():
@@ -280,12 +280,12 @@ def login_page():
 @app.route('/manifest.json')
 def manifest():
     """Serve PWA manifest"""
-    return app.send_file('manifest.json')
+    return send_file('manifest.json')
 
 @app.route('/sw.js')
 def service_worker():
     """Serve service worker"""
-    return app.send_file('sw.js')
+    return send_file('sw.js')
 
 @app.route('/api/health', methods=['GET'])
 def health():
