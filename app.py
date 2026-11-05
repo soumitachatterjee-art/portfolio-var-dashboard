@@ -4,7 +4,7 @@ Serves both API and PWA frontend
 Ready to deploy to Heroku
 """
 
-from flask import Flask, jsonify, request, render_template_string, session, redirect, url_for
+from flask import Flask, jsonify, request, render_template_string, session, redirect, url_for, send_file
 import pandas as pd
 import numpy as np
 import mysql.connector
