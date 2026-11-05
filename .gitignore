@@ -13,3 +13,28 @@ build/
 .pytest_cache/
 *.db
 .cache/
+
+# Development/test scripts (contain credentials)
+corr.py
+check_*.py
+calculate_var_correl.py
+fix_*.py
+analyze_*.py
+find_*.py
+inspect_*.py
+map_*.py
+verify_*.py
+serve_*.py
+try.ipynb
+app_backend.py
+portfolio_var_dashboard.py
+final_*.py
+
+# Excel backups
+*.xlsm
+Risk-*.xlsm
+
+# Local env files
+.env.local
+.env.*.local
+
