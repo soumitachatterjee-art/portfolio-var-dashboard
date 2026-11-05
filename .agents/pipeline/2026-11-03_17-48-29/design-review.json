@@ -1,0 +1,118 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "review_date": "2026-11-03",
+  "summary": "Design is structurally sound but contains critical unresolved ambiguities around C-slot to FFc contract mapping, DV01 factor verification, and dimensional analysis. Five blockers must be resolved before implementation: (1) C-to-FFc mapping strategy choice, (2) DV01 factor verification, (3) Excel sheet header offset documentation, (4) covariance matrix validation, (5) portfolio variance sign check.",
+  "high_findings": 4,
+  "medium_findings": 5,
+  "nit_findings": 3,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "HIGH",
+      "title": "C-to-FFc Contract Mapping is Unresolved",
+      "location": "Section 4 (Map C-slots to FFc Contracts), Assumptions Section (Assumption 1)",
+      "problem": "Design assumes C1-C14 maps to FFc1-FFc14 'by position order' without expiration date matching. This contradicts the conversational context (user messages 4-7) which clearly distinguishes rolling live contracts (C1-C14) from fixed historical contracts (FFc1-FFc35). FFc1-FFc35 are from 2020-2026 back-test data and have no inherent relationship to current contracts NOV26-FEB28.",
+      "impact": "Wrong mapping invalidates all portfolio VAR outputs. If FFc1 is not the front contract as of calculation date, correlation and volatility metrics will be misapplied to incorrect contracts.",
+      "fix": "User must choose before implementation: (A) Map C-slots to FFc by expiration date matching (requires parsing FFc dates from Excel or inferring from historical period), or (B) Use FFc1-FFc14 directly as reference metrics and document the regime-shift risk explicitly. Design must specify chosen path with implementation detail."
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "title": "Excel VAR Sheet Structure Not Fully Documented",
+      "location": "Section 3 (Read Excel Reference Metrics)",
+      "problem": "Design describes loading VAR sheet but omits critical detail: the sheet has header metadata in rows 1-5 (title, calculation date, data period, row count). Data begins at row 6. Direct pd.read_excel() without skiprows=5 will load the title rows and misalign column indices, causing KeyError when accessing 'Std.Dev'.",
+      "impact": "Code will fail at runtime when attempting to access std_devs column.",
+      "fix": "Document the correct loading code: 'var_df = pd.read_excel(..., sheet_name=\"VAR\", skiprows=5, index_col=0)'. Specify that rows 1-5 contain metadata and must be skipped."
+    },
+    {
+      "id": 3,
+      "severity": "HIGH",
+      "title": "Correlation Matrix Symmetry Check Missing; Auto-Repair Not Enforced",
+      "location": "Section 5 (Build 14×14 Covariance Matrix), Error Handling subsection",
+      "problem": "Design lists symmetry repair as an error-handling fallback ('If covariance matrix is not symmetric (numerical precision): Symmetrize') but does not enforce validation in normal operation. If the loaded CORREL matrix is asymmetric (data entry error, corruption), the downstream covariance will inherit this flaw, potentially leading to invalid results or negative eigenvalues.",
+      "impact": "Asymmetric covariance matrix can cause negative portfolio variance or invalid VaR calculations.",
+      "fix": "Add validation immediately after loading CORREL: check if matrix is symmetric; if not, symmetrize and warn user. Verify the symmetrized matrix is valid before proceeding to covariance construction."
+    },
+    {
+      "id": 4,
+      "severity": "HIGH",
+      "title": "Portfolio Variance Sign Check Lacks Diagnostics; No Recovery",
+      "location": "Section 7 (Calculate Portfolio Variance and Volatility), Error Handling subsection",
+      "problem": "Design states 'If portfolio_variance < 0: Raise ValueError' but provides no diagnostic output (eigenvalue analysis, condition number, matrix rank). If this error occurs in production, the user has no information to debug the root cause (singular matrix, numerical precision loss, data corruption).",
+      "impact": "Production failure with cryptic error message; no guidance for troubleshooting.",
+      "fix": "Before portfolio variance calculation, check that covariance matrix is positive semi-definite using eigenvalue analysis. If not, print diagnostic info (min eigenvalue, condition number) and raise ValueError with detailed explanation. Include this diagnostic code in the implementation."
+    },
+    {
+      "id": 5,
+      "severity": "MEDIUM",
+      "title": "DV01 Conversion Factor Not Verified; Market Standard Assumption Unvalidated",
+      "location": "Section 6 (Calculate DV01 Vector), Formula comment; Assumptions section",
+      "problem": "Design claims $4167 USD per basis point is 'market convention' but: (1) the calculation shown ($1M × 0.0001 / 30 = $3.33) does not yield $4167, (2) no source or specification is cited, (3) existing codebase does not reference or validate this factor. The jump from $3.33 to $4167 is unexplained.",
+      "impact": "If DV01 factor is incorrect, all portfolio variance and VaR calculations will be scaled wrong. Confidence intervals will be systematically off.",
+      "fix": "Before implementation, verify the DV01 factor with: (1) CME official Fed Funds futures contract specification, (2) internal trading systems documentation, or (3) empirical P&L comparison. Document the source and verification method in code. If verification is not feasible, add a 'MUST-VERIFY' code comment and list as a known risk."
+    },
+    {
+      "id": 6,
+      "severity": "MEDIUM",
+      "title": "\"Directly Applicable\" Assumption for Excel Metrics Never Tested or Validated",
+      "location": "Requirements Assumption 2; Design Section 4",
+      "problem": "Assumption 2 states that historical correlation and volatility (FFc1-FFc35 from 2020-2026) are applicable to current market without regime adjustment. Design acknowledges this assumption but provides no test or warning if market volatility has changed significantly (e.g., 5x higher in Nov 2026 than Oct 2026). Using outdated metrics will severely underestimate VaR.",
+      "impact": "If market regime has changed (volatility spike, market structure shift), VaR outputs will be dangerously low.",
+      "fix": "Add post-calculation validation: compare portfolio volatility estimate to a recent-period estimate (e.g., last 30 days of log returns if available). If ratio > 2 or < 0.5, print warning and recommend manual review. If recent data is not available, add code comment noting this risk and recommending manual oversight."
+    },
+    {
+      "id": 7,
+      "severity": "MEDIUM",
+      "title": "Zero Portfolio Volatility Edge Case Interpretation Unclear",
+      "location": "Section 8 (Calculate VaR), Section 10 (Edge Cases table)",
+      "problem": "Design treats zero volatility (all positions = zero) as 'Info (not error)' and outputs VaR = $0. However, a zero-position portfolio is a degenerate case and rarely the intended result of running portfolio risk analysis. The design does not clarify whether this is expected or should trigger a warning.",
+      "impact": "Ambiguous code behavior; unclear whether zero VaR is success or indicates a data issue.",
+      "fix": "Add a pre-flight check: if total_positions == 0, print warning and clarify that VaR = $0 (valid but unusual). Document whether this is acceptable or should exit early."
+    },
+    {
+      "id": 8,
+      "severity": "MEDIUM",
+      "title": "Fewer Than 14 Series Treated as Fatal; But Portfolios Can Have Partial Coverage",
+      "location": "Section 2 (Contract Slot Mapping), Edge Cases table (row: Fewer than 14 series)",
+      "problem": "Design raises ValueError if < 14 series are found, claiming the mapping is ambiguous. However, a portfolio can legitimately have positions in only 10 of 14 series; the missing series contribute zero to portfolio variance. Rejecting partial coverage is overly strict and may prevent valid calculations.",
+      "impact": "Inability to calculate VaR for portfolios that do not span the full maturity curve.",
+      "fix": "Allow fewer than 14 series: assign zero position to missing series and proceed. Print warning if coverage is < 14. Clarify in design whether this is intended behavior or if the exact 14-series set is mandatory (in which case provide a clear error message explaining why)."
+    },
+    {
+      "id": 9,
+      "severity": "MEDIUM",
+      "title": "DV01 Vector and Covariance Matrix Units Not Reconciled; Dimensional Analysis Unclear",
+      "location": "Section 6 (Calculate DV01 Vector), Section 5 (Build Covariance), Formula definitions",
+      "problem": "Design defines d_i = position × 4167 (units: USD/bp) and Σ constructed from log returns (units: bp²). The product d'Σd has units (USD/bp) × bp² = USD·bp, which is dimensionally incorrect for a variance (should be USD²). The design does not verify dimensional consistency.",
+      "impact": "If dimensional analysis is wrong, the portfolio variance formula is incorrect, and all VaR estimates will be scaled wrong.",
+      "fix": "Verify units throughout: (1) confirm position is in contract count, (2) confirm d_i = position × DV01_per_contract (units: USD/bp), (3) confirm Σ has units bp², (4) verify d'Σd = (USD/bp) × bp² = USD² ✓. If units are incorrect, provide the correct formula. Dimensional analysis must be correct before implementation."
+    },
+    {
+      "id": 10,
+      "severity": "NIT",
+      "title": "Output File Path Hardcoded; No Flexibility for Alternative Locations",
+      "location": "Section 9 (Write Results to Excel), File Storage subsection",
+      "problem": "Design hardcodes output path as c:\\Users\\Axxela\\Desktop\\VAR\\FUT-01-41-VAR-CORREL.xlsx. No command-line argument or environment variable support. If user wants to run from different directory or output elsewhere, they must edit the code.",
+      "impact": "Minor usability issue; code is less flexible.",
+      "fix": "Optional: Add command-line argument --output or read from environment variable VAR_OUTPUT_FILE. Not a blocker but improves usability."
+    },
+    {
+      "id": 11,
+      "severity": "NIT",
+      "title": "Logging Configuration Not Specified",
+      "location": "Section (Monitoring and Logging)",
+      "problem": "Design mentions 'log' actions but does not specify log level, output destination, or format. No logging module configuration provided.",
+      "impact": "Minor; implementer must infer logging approach.",
+      "fix": "Optional: Specify logging.basicConfig() with level, format, and handlers (console and/or file)."
+    },
+    {
+      "id": 12,
+      "severity": "NIT",
+      "title": "Excel Sheet Name Collision Risk; Silent Overwrite May Lose Data",
+      "location": "Section 9 (Write Results to Excel)",
+      "problem": "Design says 'Overwrite silently (log as warning)' if PORTFOLIO or POSITIONS sheets already exist. This is risky if user accidentally had important data in those sheets.",
+      "impact": "Minor; data loss if sheet names collide.",
+      "fix": "Optional: Rename output sheets with timestamp (e.g., PORTFOLIO_20261103_120000) or ask for user confirmation before overwriting."
+    }
+  ]
+}

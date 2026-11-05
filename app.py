@@ -25,10 +25,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration from environment or defaults
-DB_HOST_STELLARRISK = os.getenv('DB_HOST_STELLARRISK', '192.168.102.245')
-DB_USER_STELLARRISK = os.getenv('DB_USER_STELLARRISK', 'risk_reader')
-DB_PASS_STELLARRISK = os.getenv('DB_PASS_STELLARRISK', 'risk_reader@123')
-DB_NAME_STELLARRISK = os.getenv('DB_NAME_STELLARRISK', 'stellarrisk')
+DB_HOST_STELLARRISK = os.getenv('DB_HOST_STELLARRISK', '')
+DB_USER_STELLARRISK = os.getenv('DB_USER_STELLARRISK', '')
+DB_PASS_STELLARRISK = os.getenv('DB_PASS_STELLARRISK', '')
+DB_NAME_STELLARRISK = os.getenv('DB_NAME_STELLARRISK', '')
 
 # Authentication
 ALLOWED_EMAIL_DOMAIN = os.getenv('ALLOWED_EMAIL_DOMAIN', '@axxela.in')
