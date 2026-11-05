@@ -1,0 +1,146 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              RAILWAY DEPLOYMENT - COPY & PASTE COMMANDS                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📋 8 STEPS (10 MINUTES)
+
+STEP 1: PUSH TO GITHUB
+────────────────────────────────────────────────────────────────────────────
+cd c:\Users\Axxela\Desktop\VAR
+
+# First time only:
+git remote add origin https://github.com/USERNAME/portfolio-var-dashboard.git
+git branch -M main
+
+# Push code:
+git push -u origin main
+
+
+STEP 2: SIGN UP TO RAILWAY
+────────────────────────────────────────────────────────────────────────────
+1. Go to railway.app
+2. Click "Sign Up"
+3. Use GitHub account (OAuth)
+4. Authorize Railway
+
+
+STEP 3: CREATE NEW PROJECT
+────────────────────────────────────────────────────────────────────────────
+In Railway dashboard:
+1. Click "New Project"
+2. Select "Deploy from GitHub repo"
+3. Authorize Railway
+4. Choose: portfolio-var-dashboard
+
+
+STEP 4: RAILWAY AUTO-CONFIGURES
+────────────────────────────────────────────────────────────────────────────
+Railway detects Python, auto-starts deploy.
+Just wait for green checkmark.
+
+
+STEP 5: SET ENVIRONMENT VARIABLES
+────────────────────────────────────────────────────────────────────────────
+In Railway dashboard, click "Variables" tab, add:
+
+DB_HOST_STELLARRISK          192.168.102.245
+DB_USER_STELLARRISK          risk_reader
+DB_PASS_STELLARRISK          risk_reader@123
+DB_NAME_STELLARRISK          stellarrisk
+ALLOWED_EMAIL_DOMAIN         @axxela.in
+SECRET_KEY                   (generate with: python -c "import secrets; print(secrets.token_hex(32))")
+
+
+STEP 6: UPLOAD EXCEL FILE
+────────────────────────────────────────────────────────────────────────────
+cd c:\Users\Axxela\Desktop\VAR
+git add FUT-01-41-VAR-CORREL.xlsx
+git commit -m "Add Excel metrics"
+git push origin main
+
+Railway auto-redeploys.
+
+
+STEP 7: WAIT FOR DEPLOYMENT
+────────────────────────────────────────────────────────────────────────────
+Check Railway dashboard:
+  ✅ Green checkmark = deployed
+  ❌ Red X = failed (check logs)
+
+
+STEP 8: GET YOUR URL
+────────────────────────────────────────────────────────────────────────────
+In Railway dashboard:
+1. Click "Domains"
+2. Copy the public URL:
+   https://portfolio-var-production-xxxx.up.railway.app
+
+This is your permanent public URL.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ VERIFY SUCCESS
+
+Open the URL and check:
+□ No spinner (data loaded)
+□ 🟢 Connected badge (green)
+□ Can see portfolio metrics
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING
+
+"Build failed"
+→ Check Railway logs: Deployments tab → View Logs
+→ Look for error message
+
+"Cannot connect to database" (🔴 badge)
+→ Verify DB credentials in Variables tab
+→ Whitelist Railway IP in your database firewall
+
+"Excel file not found"
+→ Make sure file is committed to git:
+  git add FUT-01-41-VAR-CORREL.xlsx
+  git commit -m "Add Excel"
+  git push origin main
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 SHARE WITH TEAM
+
+Send them:
+
+"Portfolio VAR Dashboard is live!
+URL: https://portfolio-var-production-xxxx.up.railway.app
+Email: your-name@axxela.in (no password)
+Click login → enter email → done"
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💰 COST
+
+Free tier: $5/month credit
+Your app uses: ~$1-2/month
+Result: Completely free
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⏱️ Timeline
+
+Step 1:     2 min (push to GitHub)
+Step 2-3:   3 min (Railway signup + create project)
+Step 4-5:   2 min (auto-deploy + set variables)
+Step 6-7:   2 min (upload Excel + wait)
+Step 8:     1 min (get URL)
+
+TOTAL: 10-15 minutes
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Ready? Start with STEP 1 above!
