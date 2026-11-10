@@ -63,7 +63,7 @@ In Railway dashboard, go to **"Variables"** tab, add:
 ```
 DB_HOST_STELLARRISK=192.168.102.245
 DB_USER_STELLARRISK=risk_reader
-DB_PASS_STELLARRISK=risk_reader@123
+DB_PASS_STELLARRISK=<database-password>
 DB_NAME_STELLARRISK=stellarrisk
 ALLOWED_EMAIL_DOMAIN=@axxela.in
 SECRET_KEY=your-secret-key-here

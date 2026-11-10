@@ -31,7 +31,7 @@ FFc7  → JAN28,    FFc14 → OCT27
 - **Z-scores**: 1.645 (95% confidence), 2.326 (99% confidence)
 - **Mean daily log returns**: 0 (assumed for parametric VaR)
 - **Target Excel file**: `FUT-01-41-VAR-CORREL.xlsx`
-- **Positions DB**: Host 192.168.102.245, user risk_reader / risk_reader@123, db stellarrisk
+- **Positions DB**: Host 192.168.102.245, user risk_reader / <database-password>, db stellarrisk
 - **Positions table**: `positions_current`
 
 ---
@@ -55,7 +55,7 @@ ORDER BY product_series ASC
 **Files to Create/Modify**: `portfolio_var.py` (new)
 
 **Implementation Notes**:
-- Use mysql.connector with credentials: host='192.168.102.245', user='risk_reader', password='risk_reader@123', database='stellarrisk'
+- Use mysql.connector with credentials: host='192.168.102.245', user='risk_reader', password='<database-password>', database='stellarrisk'
 - Map returned product_series to FFc1-FFc14 using the chronological order above
 - Store as dict: `{product_series: net_position, ...}` and separately as ordered list aligned to FFc1-FFc14
 - Validate all 14 series are present; fail gracefully if any are missing

@@ -39,3 +39,8 @@ Risk-*.xlsm
 .env.*.local
 
 *.sql
+
+# Local credentials and generated account data
+google-credentials.json
+var_config.local.json
+var_by_account.csv

@@ -1,0 +1,9 @@
+{
+  "DB_HOST": "<database-host>",
+  "DB_USER": "<database-user>",
+  "DB_PASS": "<database-password>",
+  "DB_NAME": "stellarrisk",
+  "GOOGLE_SHEET_ID": "<spreadsheet-id>",
+  "GOOGLE_SHEET_TAB": "Sheet1",
+  "GOOGLE_CREDENTIALS_FILE": "google-credentials.json"
+}
